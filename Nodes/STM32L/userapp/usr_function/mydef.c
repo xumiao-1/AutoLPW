@@ -822,8 +822,8 @@ void unset_pin() {
 	trx_init();
 
 	/* restore flash */
-	hal_flash_power_config();
-	flash_init();
+	//hal_flash_power_config();
+	//flash_init();
 
 
 //	// PA9/10

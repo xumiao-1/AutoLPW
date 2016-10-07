@@ -276,7 +276,7 @@ void leave_node_stop(void) {
 	// RF
 	tat_leave_sleep_mode();
 	// flash
-	flash_on();
+	//flash_on();
 
 	// set RF to RX state
 	while((tat_set_trx_state(RX_AACK_ON)!=TAT_SUCCESS)) delay_ms(1);
