@@ -38,11 +38,14 @@ public class DAQMeasure implements SerialPortEventListener {
 
 	// measure
 	public Double measure(Profile pro) throws Exception {
-		// // power on the sensor
-		// String[] exec_cmd = { "powertoolcmd", "/vout=3.2",
-		// "/trigger=DTD" + String.valueOf(2 * _mtime) + "A",
-		// "/savefile=datafile.pt4", "/noexitwait" };
-		// Process p = Runtime.getRuntime().exec(exec_cmd);
+		// power on the sensor
+		String[] exec_cmd = { "powertoolcmd", "/vout=3.5",
+				"/trigger=ETYD" + String.valueOf(4 * _mtime) + "A",
+				"/savefile=datafile.pt4", "/noexitwait" };
+		Process p = Runtime.getRuntime().exec(exec_cmd);
+		FileUtils.logFile.println("[MONITOR] Power on sensor ("
+				+ new java.util.Date().toString().substring(11, 19) + ")");
+//		Thread.sleep(1000);
 
 		_pro = pro;
 
@@ -51,10 +54,12 @@ public class DAQMeasure implements SerialPortEventListener {
 		// 3. close port
 		// 4. get power
 		mycmd.sendSync(2 * _mtime); // activate sensor for measurement
+		FileUtils.logFile.println("[MONITOR] PC_CMD_ACT msg sent: " + (2*_mtime) +  " ("
+				+ new java.util.Date().toString().substring(11, 19) + ")");
 		_finish = false;
 		while (!_finish) {
 		}
-		Thread.sleep(1000);
+//		Thread.sleep(1000);
 
 		// // keep the power on
 		// int ret = p.waitFor();
@@ -65,8 +70,30 @@ public class DAQMeasure implements SerialPortEventListener {
 		// if (ret != 0) {
 		// FileUtils.logFile.println("**********" + ret);
 		// }
+		int ret = p.waitFor();
+
+		// hook up child process output to parent
+		InputStream lsOut = p.getInputStream();
+		InputStreamReader r = new InputStreamReader(
+				lsOut);
+		BufferedReader in = new BufferedReader(r);
+
+		// read the child process' output
+		String line;
+		while ((line = in.readLine()) != null) {
+			System.out.println(line);
+		}
+
+		p.destroy();
+		FileUtils.logFile.println("[MONITOR] Power off sensor with exit code " 
+				+ ret + " (" 
+				+ new java.util.Date().toString().substring(11, 19) + ")");
+		FileUtils.logFile.flush();
 
 		// collect the measurement
+		FileUtils.logFile.println("[MONITOR] Collecting power measurement (" 
+				+ new java.util.Date().toString().substring(11, 19) + ")");
+		FileUtils.logFile.flush();
 		if (_result != null) {
 			FileUtils.logFile.println(_pro.toString() + " " + _result);
 			FileUtils.logFile.flush();
@@ -83,8 +110,6 @@ public class DAQMeasure implements SerialPortEventListener {
 					+ new java.util.Date().toString().substring(11, 19) + ")");
 			return rand;
 		}
-
-		// return null;
 	}
 
 	private CommPortIdentifier portId;
@@ -188,7 +213,7 @@ public class DAQMeasure implements SerialPortEventListener {
 
 			try {
 				boolean bflag = false;
-				while (inputStream.available() > 0 && !bflag) {
+				while (inputStream.available() > 0/* && !bflag*/) {
 					int pre = inputStream.read();
 
 					if (pre == 0) { // data info
@@ -211,7 +236,11 @@ public class DAQMeasure implements SerialPortEventListener {
 						case 1: // SNR_CMD_RDY
 							// fname = Oscilloscope.app.get_command_handle()
 							// .send_to_sensor_pin_config();
+							FileUtils.logFile.println("[MONITOR] SNR_CMD_RDY msg received ("
+				+ new java.util.Date().toString().substring(11, 19) + ")");
 							fname = mycmd.send_to_sensor_pin_config_1(_pro);
+							FileUtils.logFile.println("[MONITOR] PC_CMD_CFG msg sent: ("
+				+ new java.util.Date().toString().substring(11, 19) + ")");
 							FileUtils.logFile.println(_pro.toString());
 							FileUtils.logFile.flush();
 							break;
@@ -224,6 +253,8 @@ public class DAQMeasure implements SerialPortEventListener {
 							// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
 							// will change in future
 							// send_to_monitor_begin();
+							FileUtils.logFile.println("[MONITOR] SNR_CMD_LPW_BGN msg received ("
+				+ new java.util.Date().toString().substring(11, 19) + ")");
 							if (fname.length() != 0) {
 								Thread.sleep(1000 * _mtime / 2);
 								System.out.println("running: IviDemo "
@@ -235,6 +266,8 @@ public class DAQMeasure implements SerialPortEventListener {
 
 								String[] exec_cmd = { "IviDemo",
 										String.valueOf(_mtime), fname + ".txt" };
+								FileUtils.logFile.println("[MONITOR] begin to run IviDemo ("
+				+ new java.util.Date().toString().substring(11, 19) + ")");
 								Process p = Runtime.getRuntime().exec(exec_cmd);
 								int ret = p.waitFor();
 
@@ -260,11 +293,19 @@ public class DAQMeasure implements SerialPortEventListener {
 								}
 
 								p.destroy();
+								FileUtils.logFile.println("[MONITOR] end running IviDemo ("
+				+ new java.util.Date().toString().substring(11, 19) + ")");
+								FileUtils.logFile.flush();
+								bflag = true;
 							}
+							FileUtils.logFile.flush();
 							break;
 
 						case 4: // SNR_CMD_LPW_END
 							// send_to_monitor_end();
+							FileUtils.logFile.println("[MONITOR] SNR_CMD_LPW_END msg received ("
+				+ new java.util.Date().toString().substring(11, 19) + ")");
+							FileUtils.logFile.flush();
 							bflag = true;
 							break;
 
@@ -295,6 +336,7 @@ public class DAQMeasure implements SerialPortEventListener {
 					_finish = true;
 				}
 			} catch (IOException e) {
+				e.printStackTrace();
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
