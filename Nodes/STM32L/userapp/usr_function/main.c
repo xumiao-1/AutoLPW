@@ -41,6 +41,7 @@
   */
 
 /* Private macro -------------------------------------------------------------*/
+#define NOT_RESET_PWR_MONITOR
 
 /* Private variables ---------------------------------------------------------*/
 
@@ -73,7 +74,7 @@ int main(void)
 	s_sensor_pkt_t msg;
 	pkt_app_t pkt = {NODE_ADDR, AUTO_CMD, 0xFF};
 	uint8_t lCfg[CONFIG_LEN]; // pin configuration
-#if 0 // TODO: temporarily disabled to support power monitor
+#if defined(NOT_RESET_PWR_MONITOR) // not reset power monitor
 	// wait command from PC
 	while (1) {
 		if (get_app_pool_items() != 0) {
@@ -87,7 +88,7 @@ int main(void)
 			}
 		}
 	}
-#endif // TODO
+#endif // NOT_RESET_PWR_MONITOR
 
 	// step 1: tell pc that I'm ready
 	// pkt data
@@ -140,11 +141,11 @@ int main(void)
 	node_send_app_command(PRX_NODE, "hello", 5, 2);
 #endif //AUTOMATION
 
-#if 0 // TODO: temporarily disabled to support power monitor
+#if defined(NOT_RESET_PWR_MONITOR) // not reset power monitor
 	// restart
 	cli(); // disable interrupts
 	NVIC_SystemReset();
-#endif // TODO
+#endif // NOT_RESET_PWR_MONITOR
 
 #else // proxy node
 	while(true)	{
